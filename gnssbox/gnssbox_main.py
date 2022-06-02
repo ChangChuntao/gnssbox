@@ -1,6 +1,13 @@
-from gnssbox.plot import plotSite
+import sys
+import os
+
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
 
 # 通过站点文件绘制地图
+from plot import plotSite
+
 plotSite.plotSite(file=r"D:\Code\gnssbox\gnssbox\plot\site.info")
 
 # 通过站点信息绘制站点图

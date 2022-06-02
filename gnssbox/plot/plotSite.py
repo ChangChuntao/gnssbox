@@ -1,9 +1,11 @@
-from gnssbox.io.readsiteinfo import readsiteinfo
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+
+from ioGnss.readsiteinfo import readsiteinfo
 
 
 def cartoplot(siteinfo, L_range, B_range, L_mid):
