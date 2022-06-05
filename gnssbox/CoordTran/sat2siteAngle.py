@@ -9,7 +9,7 @@ def sat2siteAngle(satX, satY, satZ, siteX, siteY, siteZ):
     north, east, up = xyz2neu(siteX, siteY, siteZ, satX, satY, satZ, System)
     siteB, siteL, H = xyz2blh(siteX, siteY, siteZ, System)
     satB, satL, H = xyz2blh(satX, satY, satZ, System)
-    Azi = xy2azi(siteL, siteB, satL, satB)
-    Ele = math.atan(up / math.sqrt(north * north + east * east))
-    Zenith = math.pi/2 - Ele
-    return Zenith, Azi, Ele
+    Azimuth = xy2azi(siteL, siteB, satL, satB)
+    Elevation = math.atan(up / math.sqrt(north * north + east * east))
+    Zenith = math.pi/2 - Elevation
+    return Zenith, Azimuth, Elevation
