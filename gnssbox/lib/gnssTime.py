@@ -48,7 +48,7 @@ def gnssTimesTran(**kwargs):
     timeStyle = ['DATETIME', 'YMD', 'YDOY', 'GPSWEEKD', 'MJDSOD']
     # timeStyleLen为支持时间类型的长度，与timeStyle一一对应
     timeStyleLen = [1, 3, 2, 2, 2]
-    
+
     # 1. 首先将传入的时间格式转换为datetime，转为inDatatime
     if fromTime == 'DATETIME':
         # 判断是否为datetime类型
@@ -66,7 +66,7 @@ def gnssTimesTran(**kwargs):
         else:
             # 将gnss时间转为datetime
             inDatatime = gnssTime2datetime(inTime, fromTime)
-    
+
     # 2. 后将转出的datetime，转换为指定的时间格式
     if toTime == 'DATETIME':
         # 若传出的时间格式为datetime，调用gnssTime2datetime
@@ -99,6 +99,7 @@ def gnssTime2datetime(gnssTime, gnssTimeType):
         print("暂不支持此格式!")
         sys.exit()
     return dateTime
+
 
 # 2022-04-30 : datetime转GNSS TIME并输出
 #              by Chang Chuntao  -> Version : 1.12

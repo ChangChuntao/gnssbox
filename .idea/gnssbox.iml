@@ -10,10 +10,12 @@
   <component name="PyNamespacePackagesService">
     <option name="namespacePackageFolders">
       <list>
-        <option value="$MODULE_DIR$/gnssbox/GetGnssData" />
+        <option value="$MODULE_DIR$/gnssbox/getGnssData" />
         <option value="$MODULE_DIR$/gnssbox/ioGnss" />
         <option value="$MODULE_DIR$/gnssbox/lib" />
         <option value="$MODULE_DIR$/gnssbox/plot" />
+        <option value="$MODULE_DIR$/gnssbox/module" />
+        <option value="$MODULE_DIR$/gnssbox/mathLib" />
       </list>
     </option>
   </component>
