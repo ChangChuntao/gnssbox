@@ -4,9 +4,9 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
-from gnssbox.ioGnss import readsp3
+from gnssbox.ioGnss.readSp3 import readSp3
 
 def plotSatTrack(**kwargs):
     print(kwargs)
     if 'sp3file' in kwargs:
-        print('sss')
+        sp3Data = readSp3(kwargs['sp3File'])
