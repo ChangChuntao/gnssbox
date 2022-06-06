@@ -1,4 +1,11 @@
-
+#!/usr/bin/python3
+# gnssbox        : The most complete GNSS Python toolkit ever
+# Github         : https://github.com/ChangChuntao/gnssbox.git
+# xyz2neu        : Convert ECEF coordinates to local coordinates
+# Author         : Chang Chuntao 1252443496@qq.com
+# Copyright(C)   : The GNSS Center, Wuhan University
+# Creation Date  : 2022.06.06
+# Latest Version : 2022.06.06 - Version 1.00
 
 def xyz2neu(originX, originY, originZ, X, Y, Z, System):
     import math
