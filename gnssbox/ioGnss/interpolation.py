@@ -69,3 +69,4 @@ def interpolationPandaAtt(pandaAttFile, interval, *outPandaAttFile):
         writePandaAtt(firstLine, newPandaAttData, outPandaAttFile[0])
     except:
         print('不写入文件')
+    return newPandaAttData

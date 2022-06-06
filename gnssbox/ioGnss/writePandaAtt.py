@@ -17,3 +17,4 @@ def writePandaAtt(firstLine, newPandaAttData, outPandaAttfile):
                    ('%.13f' % (data.modeValues)).rjust(19) +
                    (str(data.mode)).rjust(2) + 
                    '\n')
+    outf.close()

@@ -1,5 +1,13 @@
-# 2022.06.03 : 读取站点信息文件，并返回为sp3Data
-#              by ChangChuntao -> Version : 1.00
+#!/usr/bin/python3
+# gnssbox        : The most complete GNSS Python toolkit ever
+# Github         : https://github.com/ChangChuntao/gnssbox.git
+# readsiteinfo   : Read a simple site information file
+# Author         : Chang Chuntao 1252443496@qq.com
+# Copyright(C)   : The GNSS Center, Wuhan University
+# Creation Date  : 2022.06.03
+# Latest Version : 2022.06.03 - Version 1.00
+
+
 def readsiteinfo(sitefile):
     # 简易站点信息文件，文件格式：
     # | L1 B1 SITE_NAME1 |
