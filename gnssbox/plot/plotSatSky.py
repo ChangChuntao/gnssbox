@@ -19,7 +19,6 @@ def plotSatSky(**kwargs):
     import sys
     import math
     from gnssbox.ioGnss.readSp3 import readSp3
-    from gnssbox.ioGnss.readBrdc import readBrdc
     from gnssbox.coordTran.sat2siteAngle import sat2siteAngle
     from matplotlib import pyplot as plt
     print(kwargs)

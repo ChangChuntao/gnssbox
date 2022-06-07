@@ -12,10 +12,9 @@ def xyz2blh(X, Y, Z, System):
     import math
     from gnssbox.lib.gnssParameter import coordSystem
     a = coordSystem[System].a
-    f = coordSystem[System].f
-    e2 = f * (2.0 - f)
+    e2 = coordSystem[System].e2
+    b = coordSystem[System].b
     L = math.atan2(Y, X)
-    b = a - a * f
     N0 = a
     H0 = math.sqrt(X * X + Y * Y + Z * Z) - math.sqrt(a * b)
     B0 = math.atan(Z / math.sqrt(X * X + Y * Y) / (1.0 - e2 * N0 / (N0 + H0)))

@@ -1,7 +1,7 @@
-# # 通过站点文件绘制地图
+# # # 通过站点文件绘制地图
 from gnssbox.plot import plotSite
 
-plotSite.plotSite(file=r"gnssbox\plot\example\site.info")
+plotSite.plotSite(file=r"gnssbox\plot\example\site.info", autoLB=True,)
 # # 通过站点信息绘制站点图
 # site = {'JOZE': {'L': 21.03139, 'B': 52.09722},
 #         'TIXI': {'L': 128.86639, 'B': 71.63444},
@@ -30,4 +30,4 @@ plotSatSky(sp3File=r'D:\Code\gnssbox\gnssbox\ioGnss\Example\wum21921.sp3',
 from gnssbox.plot.plotSatTrack import plotSatTrack
 
 # plotSatTrack(r'D:\Code\CodeTest\whu20696.sp3')
-plotSatTrack(r'gnssbox\ioGnss\Example\wum21921.sp3', system=['C'])
+plotSatTrack(r'gnssbox\ioGnss\Example\wum21921.sp3', system=['C', 'G'])
