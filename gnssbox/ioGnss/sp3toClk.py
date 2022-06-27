@@ -22,7 +22,7 @@ def sp3toClk(sp3File, clkFile):
     for prn in sp3Data:
         clkDataPrn = []
         for prnEpoch in sp3Data[prn]:
-            clkDataPrn.append(clkSat(prnEpoch.epoch, prnEpoch.clk, None))
+            clkDataPrn.append(clkSat(prnEpoch.epoch, prnEpoch.clk/1000000, None))
         clkData['sat'][prn] = clkDataPrn
     
     writeClk(clkData, clkFile)
