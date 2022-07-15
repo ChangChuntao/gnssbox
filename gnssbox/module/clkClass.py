@@ -10,15 +10,15 @@
 # 2022.06.27 : 钟差卫星类
 #              by ChangChuntao -> Version : 1.00
 class clkSat:
-    def __init__(self, epoch, clk, clkMerror):
+    def __init__(self, epoch, clk, clkVel):
         self.epoch = epoch
         self.clk = clk
-        self.clkMerror = clkMerror
+        self.clkVel = clkVel
 
 # 2022.06.27 : 钟差站点类
 #              by ChangChuntao -> Version : 1.00
 class clkSite:
-    def __init__(self, epoch, clk, clkMerror):
+    def __init__(self, epoch, clk, clkVel):
         self.epoch = epoch
         self.clk = clk
-        self.clkMerror = clkMerror
+        self.clkVel = clkVel

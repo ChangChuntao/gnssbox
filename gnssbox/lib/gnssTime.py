@@ -126,3 +126,52 @@ def datetime2gnssTime(specTime, gnssTimeType):
         print("暂不支持此格式!")
         sys.exit()
     return outTime
+
+
+def ymd2doy(year, month, day):
+    [year, doy] = gnssTimesTran(From = 'YMD', To = 'YDOY', Time = [year, month, day])
+    return year, doy
+
+def ymd2gpswd(year, month, day):
+    [gpsWeek, gpsWeekD] = gnssTimesTran(From = 'YMD', To = 'GPSWEEKD', Time = [year, month, day])
+    return gpsWeek, gpsWeekD
+
+def ymd2mjd(year, month, day):
+    [mjd, sod] = gnssTimesTran(From = 'YMD', To = 'MJDSOD', Time = [year, month, day])
+    return mjd, sod
+
+def doy2ymd(year, doy):
+    [year, month, day] = gnssTimesTran(From = 'YDOY', To = 'YMD', Time = [year, doy])
+    return year, month, day
+
+def doy2gpswd(year, doy):
+    [gpsWeek, gpsWeekD] = gnssTimesTran(From = 'YDOY', To = 'GPSWEEKD', Time = [year, doy])
+    return gpsWeek, gpsWeekD
+
+def doy2mjd(year, doy):
+    [mjd, sod] = gnssTimesTran(From = 'YDOY', To = 'MJDSOD', Time = [year, doy])
+    return mjd, sod
+
+def gpswd2ymd(gpsWeek, gpsWeekD):
+    [year, month, day] = gnssTimesTran(From = 'GPSWEEKD', To = 'YMD', Time = [gpsWeek, gpsWeekD])
+    return year, month, day
+
+def gpswd2doy(gpsWeek, gpsWeekD):
+    [year, doy] = gnssTimesTran(From = 'GPSWEEKD', To = 'YDOY', Time = [gpsWeek, gpsWeekD])
+    return year, doy
+
+def gpswd2mjd(gpsWeek, gpsWeekD):
+    [mjd, sod] = gnssTimesTran(From = 'GPSWEEKD', To = 'MJDSOD', Time = [gpsWeek, gpsWeekD])
+    return mjd, sod
+
+def mjd2ymd(mjd, sod):
+    [year, month, day] = gnssTimesTran(From = 'MJDSOD', To = 'YMD', Time = [mjd, sod])
+    return year, month, day
+
+def mjd2doy(mjd, sod):
+    [year, doy] = gnssTimesTran(From = 'MJDSOD', To = 'DOY', Time = [mjd, sod])
+    return year, doy
+
+def mjd2gpswd(mjd, sod):
+    [gpsWeek, gpsWeekD] = gnssTimesTran(From = 'MJDSOD', To = 'GPSWEEKD', Time = [mjd, sod])
+    return gpsWeek, gpsWeekD

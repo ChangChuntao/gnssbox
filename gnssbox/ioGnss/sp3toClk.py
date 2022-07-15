@@ -13,11 +13,12 @@ def sp3toClk(sp3File, clkFile):
     from gnssbox.ioGnss.readSp3 import readSp3Head
     from gnssbox.ioGnss.writeClk import writeClk
     from gnssbox.module.clkClass import clkSat
-    sp3DataHead = readSp3Head(sp3File)
+    sp3Head = readSp3Head(sp3File)
     sp3Data = readSp3(sp3File)
     clkData = {'sat': {}, 'site' : {}}
-    for prn in sp3DataHead['prn']:
-        clkData['sat'][prn] = []
+    clkHead = {'RINEX VERSION': 3.00, 'PGM': 'GNSSBOX', 'INTERVAL': None, 'RUN BY': 'WHU@CCT', 'DATE': '', 'TYPES OF DATA': ['AS'],
+               'ANALYSIS CENTER': 'WHU  GNSS RESEARCH CENTER, WUHAN UNIVERSITY, P.R.CHINA', 'SOLN SATS': sp3Head['prn'],
+               'epochList': sp3Head['epoch']}
     
     for prn in sp3Data:
         clkDataPrn = []
@@ -25,6 +26,6 @@ def sp3toClk(sp3File, clkFile):
             clkDataPrn.append(clkSat(prnEpoch.epoch, prnEpoch.clk/1000000, None))
         clkData['sat'][prn] = clkDataPrn
     
-    writeClk(clkData, clkFile)
+    writeClk(clkHead, clkData, clkFile)
     
     

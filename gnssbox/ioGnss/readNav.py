@@ -1,178 +1,392 @@
+#!/usr/bin/python3
+# gnssbox        : The most complete GNSS Python toolkit ever
+# Github         : https://github.com/ChangChuntao/gnssbox.git
+# readNav        : Read the broadcast ephemeris file
+# Author         : Chang Chuntao 1252443496@qq.com
+# Copyright(C)   : The GNSS Center, Wuhan University
+# Creation Date  : 2022.07.14
+# Latest Version : 2022.07.14 - Version 1.00
 
-def readNav(navigationFile):
-    from gnssbox.module.navClass import Navigation
+# 2022.06.03 : 精密星历文件中记录时间的行转为datetime格式
+#              by ChangChuntao -> Version : 1.00
+def navFileTimeLine2Datetime(line):
     import datetime
-    import numpy as np
-    import pandas as pd
-    """
-    读取导航电文
-    :param navigationFile:
-    :return:
-    """
-    f = open(navigationFile)
-    nav = f.readlines()
-    line = 0
-    version = None # 版本
-    alphaList = None # ION ALPHA
-    betaList = None # ION BETA
-    while True:
-        if 'RINEX VERSION / TYPE' in nav[line]:
-            version = nav[line][0:-21].split()[0]
-            line += 1
-        if 'ION ALPHA' in nav[line]:
-            alphaList = nav[line][0:55].split()
-            line += 1
-        if 'ION BETA' in nav[line]:
-            betaList = nav[line][0:55].split()
-            line += 1
-        elif 'END OF HEADER' in nav[line]:
-            line += 1
+    line = line[3:]
+    year = int(line.split()[0])
+    month = int(line.split()[1])
+    day = int(line.split()[2])
+    hour = int(line.split()[3])
+    minute = int(line.split()[4])
+    second = int(line[18:20])
+    navDataTime = datetime.datetime(year, month, day, hour, minute, second)
+    return navDataTime
+
+
+# 2022.07.14 : 广播星历数据
+#              by ChangChuntao -> Version : 1.00
+def readNavHead(navFile):
+    navFileLineOpen = open(navFile, 'r+')
+    navFileLine = navFileLineOpen.readlines()
+    navFileLineOpen.close()
+    navHeadData = {}
+    rinexVersion = float(navFileLine[0].split()[0])
+    navHeadData['RINEX VERSION'] = rinexVersion
+    navHeadData['First Line'] = navFileLine[0]
+    for line in navFileLine:
+        if 'END OF HEADER' in line:
             break
-        else:
-            line += 1
-    del nav[0:line]
-    nav = [lines.replace('D', 'E') for lines in nav]
-    nav = [lines.replace('E ', 'E0') for lines in nav]
-    nav = [lines.replace('0-', '0 -') for lines in nav]
-    nav = [lines.replace('1-', '1 -') for lines in nav]
-    nav = [lines.replace('2-', '2 -') for lines in nav]
-    nav = [lines.replace('3-', '3 -') for lines in nav]
-    nav = [lines.replace('4-', '4 -') for lines in nav]
-    nav = [lines.replace('5-', '5 -') for lines in nav]
-    nav = [lines.replace('6-', '6 -') for lines in nav]
-    nav = [lines.replace('7-', '7 -') for lines in nav]
-    nav = [lines.replace('8-', '8 -') for lines in nav]
-    nav = [lines.replace('9-', '9 -') for lines in nav]
-    nav = [lines.split() for lines in nav]
-    ephemeris_list = []
-    svList = []
-    PRN_old = "X00"
-    epoch_old = datetime.datetime.now()
-    while True:
-        # --------------------------------------------------------------
-        GPS = GLONASS = GALILEO = COMPASS = SBAS = False
-        PRN = nav[0][0]
-        if "G" in PRN:
-            GPS = True
-        elif "R" in PRN:
-            GLONASS = True
-        elif "E" in PRN:
-            GALILEO = True
-        elif "C" in PRN:
-            COMPASS = True
-        elif "J" in PRN:
-            QZSS = True
-        elif "I" in PRN:
-            IRSS = True
-        elif "S" in PRN:
-            SBAS = True
-        else:
-            if len(PRN) == 1:
-                PRN = 'G0' + PRN
-            elif len(PRN) == 2:
-                PRN = 'G' + PRN
+        elif 'PGM' in line:
+            navHeadData['PGM Line'] = navFileLine[1]
+        elif 'LEAP SECONDS' in line:
+            navHeadData['LEAP SECONDS'] = int(line.split()[0])
+    return navHeadData
 
-        if len(nav[0][1]) == 2:
-            year = int(nav[0][1])
-            if 79 < year < 100:
-                year += 1900
-            elif year <= 79:
-                year += 2000
-            else:
-                # 自动触发异常
-                raise Warning('Navigation year is not recognized! | Program stopped!')
-        else:
-            year = int(nav[0][1])
-        month, day, hour, minute, second = int(nav[0][2]), int(nav[0][3]), int(nav[0][4]), int(nav[0][5]), int(float(nav[0][6]))
-        epoch = datetime.datetime(year=year,
-                                  month=month,
-                                  day=day,
-                                  hour=hour,
-                                  minute=minute,
-                                  second=second)
-        # --------------------------------------------------------------
-        clockBias = nav[0][7]
-        clockDrift = nav[0][8]
-        clockDriftRate = nav[0][9]
-        if GLONASS or SBAS:
-            x, vx, ax = float(nav[1][0]), float(nav[1][1]), float(nav[1][2])
-            y, vy, ay = float(nav[2][0]), float(nav[2][1]), float(nav[2][2])
-            z, vz, az = float(nav[3][0]), float(nav[3][1]), float(nav[3][2])
-            health = float(nav[1][3])
-            freqNumber = float(nav[2][3])
-            operationDay = float(nav[3][3])
-            sqrtA, toe, m0, e, delta_n, smallomega, cus, cuc, crs, crc, cis, cic, idot, i0, bigomega0, bigomegadot = [np.nan for _ in range(16)]
-            if PRN == PRN_old and epoch == epoch_old:
-                ephemeris_list[-1] = [PRN, epoch, clockBias, clockDrift,
-                                      clockDriftRate, sqrtA, toe, m0, e, delta_n,
-                                      smallomega, cus, cuc, crs, crc, cis, cic,
-                                      idot, i0, bigomega0, bigomegadot,
-                                      x, y, z, vx, vy, vz, ax, ay, az,
-                                      health, freqNumber, operationDay]
-            else:
-                svList.append(PRN)
-                ephemeris_list.append([PRN, epoch, clockBias, clockDrift,
-                                       clockDriftRate, sqrtA, toe, m0, e, delta_n,
-                                       smallomega, cus, cuc, crs, crc, cis, cic,
-                                       idot, i0, bigomega0, bigomegadot,
-                                       x, y, z, vx, vy, vz, ax, ay, az,
-                                       health, freqNumber, operationDay])
-            del nav[0:4]
-        else:
-            e = float(nav[2][1])
-            m0 = float(nav[1][3])
-            i0 = float(nav[4][0])
-            toe = float(nav[3][0])
-            cus = float(nav[2][2])
-            cuc = float(nav[2][0])
-            crs = float(nav[1][1])
-            crc = float(nav[4][1])
-            cis = float(nav[3][3])
-            cic = float(nav[3][1])
-            idot = float(nav[5][0])
-            sqrtA = float(nav[2][3])
-            delta_n = float(nav[1][2])
-            smallomega = float(nav[4][2])
-            bigomega0 = float(nav[3][2])
-            bigomegadot = float(nav[4][3])
-            x, y, z, vx, vy, vz, ax, ay, az, health, freqNumber, operationDay = [np.nan for _ in range(12)]
-            if PRN == PRN_old and epoch == epoch_old:
-                ephemeris_list[-1] = [PRN, epoch, clockBias, clockDrift,
-                                      clockDriftRate, sqrtA, toe, m0, e, delta_n,
-                                      smallomega, cus, cuc, crs, crc, cis, cic,
-                                      idot, i0, bigomega0, bigomegadot,
-                                      x, y, z, vx, vy, vz, ax, ay, az,
-                                      health, freqNumber, operationDay]
-            else:
-                svList.append(PRN)
-                ephemeris_list.append([PRN, epoch, clockBias, clockDrift,
-                                       clockDriftRate, sqrtA, toe, m0, e, delta_n,
-                                       smallomega, cus, cuc, crs, crc, cis, cic,
-                                       idot, i0, bigomega0, bigomegadot,
-                                       x, y, z, vx, vy, vz, ax, ay, az,
-                                       health, freqNumber, operationDay])
-            del nav[0:8]
-        PRN_old = PRN
-        epoch_old = epoch
-        if len(nav) == 0:
+
+# 2022.07.14 : 广播星历基本信息
+#              by ChangChuntao -> Version : 1.00
+def getNavSatTime(navFile):
+    navFileLineOpen = open(navFile, 'r+')
+    navFileLine = navFileLineOpen.readlines()
+    navFileLineOpen.close()
+
+    endHeadLine = 0
+    satSystem = ['C', 'R', 'G', 'E', 'I', 'S', 'J']
+    for line in navFileLine:
+        endHeadLine += 1
+        if 'END OF HEADER' in line:
             break
-    columnNames = ["SV", "Epoch", "clockBias", "clockDrift", "clockDriftRate", "sqrtA", "toe", "m0", "eccentricity",
-                   "delta_n","smallomega", "cus", "cuc", "crs", "crc", "cis", "cic",
-                   "idot", "i0", "bigomega0", "bigomegadot",
-                   "x", "y", "z", "vx", "vy", "vz", "ax", "ay", "az",
-                   "health", "freqNumber", "operationDay"]
-    ephemeris = pd.DataFrame(ephemeris_list, index=svList, columns=columnNames)
-    ephemeris.index.name = 'SV'
-    ephemeris["epoch"] = ephemeris.Epoch
-    ephemeris.set_index('Epoch', append=True, inplace=True)
-    ephemeris = ephemeris.reorder_levels(['Epoch', 'SV'])
-    ephemeris = ephemeris.drop(["SV"], axis=1)
+    lineNum = endHeadLine
+    navHead = {}
+    satList = []
+    while True:
+        if lineNum < len(navFileLine) - 1:
+            lineNum += 1
+            if navFileLine[lineNum][0] in satSystem:
+                if navFileLine[lineNum][:3] not in satList:
+                    satList.append(navFileLine[lineNum][:3])
+                    navHead[navFileLine[lineNum][:3]] = []
+        else:
+            break
+    lineNum = endHeadLine
+    while True:
+        if lineNum < len(navFileLine) - 1:
+            lineNum += 1
+            if navFileLine[lineNum][0] in satSystem:
+                nowTime = navFileTimeLine2Datetime(navFileLine[lineNum])
 
-    fileEpoch = datetime.date(year=year,
-                              month=month,
-                              day=day)
-    f.close()  # close the file
-    return Navigation(fileEpoch, ephemeris, version, alphaList, betaList)
+                navHead[navFileLine[lineNum][:3]].append(nowTime)
+        else:
+            break
+    return navHead
 
 
-readNav(r'D:\Code\gnssbox\gnssbox\ioGnss\Example\brdm0010.22p')
+# 2022.07.14 : 广播星历数据
+#              by ChangChuntao -> Version : 1.00
+def readNav(navFile):
+    from gnssbox.module.navClass import bdsNav, gpsNav, galileoNav, glonassNav, irnssNav, sbasNav, qzssNav
+    navSatTime = getNavSatTime(navFile)
+    navFileLineOpen = open(navFile, 'r+')
+    navFileLine = navFileLineOpen.readlines()
+    navFileLineOpen.close()
+    rinexVer = float(navFileLine[0].split()[0])
+    endHeadLine = 0
+    for line in navFileLine:
+        endHeadLine += 1
+        if 'END OF HEADER' in line:
+            break
+    navData = {}
+    for sat in navSatTime:
+        navData[sat] = []
+    lineNum = endHeadLine
+    while lineNum < len(navFileLine):
+        sat = navFileLine[lineNum][:3]
+        epoch = navFileTimeLine2Datetime(navFileLine[lineNum])
+        if sat[0] == 'C':
+            SVclockBias = float(navFileLine[lineNum][23:42])
+            SVclockDrift = float(navFileLine[lineNum][42:61])
+            SVclockDriftRate = float(navFileLine[lineNum][61:80])
+
+            AODE = float(navFileLine[lineNum + 1][4:23])
+            Crs = float(navFileLine[lineNum + 1][23:42])
+            DeltaN = float(navFileLine[lineNum + 1][42:61])
+            M0 = float(navFileLine[lineNum + 1][61:80])
+
+            Cuc = float(navFileLine[lineNum + 2][4:23])
+            e = float(navFileLine[lineNum + 2][23:42])
+            Cus = float(navFileLine[lineNum + 2][42:61])
+            sqrtA = float(navFileLine[lineNum + 2][61:80])
+
+            toe = float(navFileLine[lineNum + 3][4:23])
+            Cic = float(navFileLine[lineNum + 3][23:42])
+            OMEGA0 = float(navFileLine[lineNum + 3][42:61])
+            Cis = float(navFileLine[lineNum + 3][61:80])
+
+            i0 = float(navFileLine[lineNum + 4][4:23])
+            Crc = float(navFileLine[lineNum + 4][23:42])
+            omega = float(navFileLine[lineNum + 4][42:61])
+            OMEGA_DOT = float(navFileLine[lineNum + 4][61:80])
+
+            IDOT = float(navFileLine[lineNum + 5][4:23])
+            Spare1 = 0.0
+            BDT_Week = float(navFileLine[lineNum + 5][42:61])
+            Spare2 = 0.0
+
+            SVaccuracy = float(navFileLine[lineNum + 6][4:23])
+            SatH1 = float(navFileLine[lineNum + 6][23:42])
+            TGD1 = float(navFileLine[lineNum + 6][42:61])
+            TGD2 = float(navFileLine[lineNum + 6][61:80])
+
+            Transmission = float(navFileLine[lineNum + 7][4:23])
+            AODC = float(navFileLine[lineNum + 7][23:42])
+            lineNum += 8
+            navData[sat].append(bdsNav(epoch, SVclockBias, SVclockDrift, SVclockDriftRate,
+                                       AODE, Crs, DeltaN, M0, Cuc, e, Cus,
+                                       sqrtA, toe, Cic, OMEGA0, Cis,
+                                       i0, Crc, omega, OMEGA_DOT, IDOT, Spare1, BDT_Week, Spare2,
+                                       SVaccuracy, SatH1, TGD1, TGD2, Transmission, AODC))
+        elif sat[0] == 'G':
+            SVclockBias = float(navFileLine[lineNum][23:42])
+            SVclockDrift = float(navFileLine[lineNum][42:61])
+            SVclockDriftRate = float(navFileLine[lineNum][61:80])
+
+            IODE = float(navFileLine[lineNum + 1][4:23])
+            Crs = float(navFileLine[lineNum + 1][23:42])
+            DeltaN = float(navFileLine[lineNum + 1][42:61])
+            M0 = float(navFileLine[lineNum + 1][61:80])
+
+            Cuc = float(navFileLine[lineNum + 2][4:23])
+            e = float(navFileLine[lineNum + 2][23:42])
+            Cus = float(navFileLine[lineNum + 2][42:61])
+            sqrtA = float(navFileLine[lineNum + 2][61:80])
+
+            toe = float(navFileLine[lineNum + 3][4:23])
+            Cic = float(navFileLine[lineNum + 3][23:42])
+            OMEGA0 = float(navFileLine[lineNum + 3][42:61])
+            Cis = float(navFileLine[lineNum + 3][61:80])
+
+            i0 = float(navFileLine[lineNum + 4][4:23])
+            Crc = float(navFileLine[lineNum + 4][23:42])
+            omega = float(navFileLine[lineNum + 4][42:61])
+            OMEGA_DOT = float(navFileLine[lineNum + 4][61:80])
+
+            IDOT = float(navFileLine[lineNum + 5][4:23])
+            L2Codes = float(navFileLine[lineNum + 5][23:42])
+            GPS_Week = float(navFileLine[lineNum + 5][42:61])
+            L2PdataFlag = float(navFileLine[lineNum + 5][61:80])
+
+            SVaccuracy = float(navFileLine[lineNum + 6][4:23])
+            SVhealth = float(navFileLine[lineNum + 6][23:42])
+            TGD = float(navFileLine[lineNum + 6][42:61])
+            IODC = float(navFileLine[lineNum + 6][61:80])
+
+            Transmission = float(navFileLine[lineNum + 7][4:23])
+            if len(navFileLine[lineNum + 7]) < 42 or navFileLine[lineNum + 7][23:42] == '' or \
+                    navFileLine[lineNum + 7][23:42] == '                   ':
+                FitIntervalHours = 0.0
+            else:
+                FitIntervalHours = float(navFileLine[lineNum + 7][23:42])
+            lineNum += 8
+            navData[sat].append(gpsNav(epoch, SVclockBias, SVclockDrift, SVclockDriftRate,
+                                       IODE, Crs, DeltaN, M0, Cuc, e, Cus,
+                                       sqrtA, toe, Cic, OMEGA0, Cis,
+                                       i0, Crc, omega, OMEGA_DOT, IDOT, L2Codes, GPS_Week, L2PdataFlag,
+                                       SVaccuracy, SVhealth, TGD, IODC, Transmission, FitIntervalHours))
+        elif sat[0] == 'E':
+            SVclockBias = float(navFileLine[lineNum][23:42])
+            SVclockDrift = float(navFileLine[lineNum][42:61])
+            SVclockDriftRate = float(navFileLine[lineNum][61:80])
+
+            IODnav = float(navFileLine[lineNum + 1][4:23])
+            Crs = float(navFileLine[lineNum + 1][23:42])
+            DeltaN = float(navFileLine[lineNum + 1][42:61])
+            M0 = float(navFileLine[lineNum + 1][61:80])
+
+            Cuc = float(navFileLine[lineNum + 2][4:23])
+            e = float(navFileLine[lineNum + 2][23:42])
+            Cus = float(navFileLine[lineNum + 2][42:61])
+            sqrtA = float(navFileLine[lineNum + 2][61:80])
+
+            toe = float(navFileLine[lineNum + 3][4:23])
+            Cic = float(navFileLine[lineNum + 3][23:42])
+            OMEGA0 = float(navFileLine[lineNum + 3][42:61])
+            Cis = float(navFileLine[lineNum + 3][61:80])
+
+            i0 = float(navFileLine[lineNum + 4][4:23])
+            Crc = float(navFileLine[lineNum + 4][23:42])
+            omega = float(navFileLine[lineNum + 4][42:61])
+            OMEGA_DOT = float(navFileLine[lineNum + 4][61:80])
+
+            IDOT = float(navFileLine[lineNum + 5][4:23])
+            DataSources = float(navFileLine[lineNum + 5][23:42])
+            GAL_Week = float(navFileLine[lineNum + 5][42:61])
+            Spare = 0.0
+
+            SISA = float(navFileLine[lineNum + 6][4:23])
+            SVhealth = float(navFileLine[lineNum + 6][23:42])
+            BGD_E5a_E1 = float(navFileLine[lineNum + 6][42:61])
+            BGD_E5b_E1 = float(navFileLine[lineNum + 6][61:80])
+
+            Transmission = float(navFileLine[lineNum + 7][4:23])
+
+            lineNum += 8
+            navData[sat].append(galileoNav(epoch, SVclockBias, SVclockDrift, SVclockDriftRate,
+                                           IODnav, Crs, DeltaN, M0, Cuc, e, Cus,
+                                           sqrtA, toe, Cic, OMEGA0, Cis,
+                                           i0, Crc, omega, OMEGA_DOT, IDOT, DataSources, GAL_Week, Spare,
+                                           SISA, SVhealth, BGD_E5a_E1, BGD_E5b_E1, Transmission))
+        elif sat[0] == 'R':
+            SVclockBias = float(navFileLine[lineNum][23:42])
+            SVrelativeFrequencyBias = float(navFileLine[lineNum][42:61])
+            MessageFrameTime = float(navFileLine[lineNum][61:80])
+
+            posX = float(navFileLine[lineNum + 1][4:23])
+            velX = float(navFileLine[lineNum + 1][23:42])
+            accelerationX = float(navFileLine[lineNum + 1][42:61])
+            health = float(navFileLine[lineNum + 1][61:80])
+
+            posY = float(navFileLine[lineNum + 2][4:23])
+            velY = float(navFileLine[lineNum + 2][23:42])
+            accelerationY = float(navFileLine[lineNum + 2][42:61])
+            frequency = float(navFileLine[lineNum + 2][61:80])
+
+            posZ = float(navFileLine[lineNum + 3][4:23])
+            velZ = float(navFileLine[lineNum + 3][23:42])
+            accelerationZ = float(navFileLine[lineNum + 3][42:61])
+            operAge = float(navFileLine[lineNum + 3][61:80])
+            if rinexVer > 3.04:
+                StatusFlags = float(navFileLine[lineNum + 4][4:23])
+                delayDif = float(navFileLine[lineNum + 4][23:42])
+                URAI = float(navFileLine[lineNum + 4][42:61])
+                HealthFlags = float(navFileLine[lineNum + 4][61:80])
+                lineNum += 5
+            else:
+                StatusFlags = 0.0
+                delayDif = 0.0
+                URAI = 0.0
+                HealthFlags = 0.0
+                lineNum += 4
+
+            navData[sat].append(glonassNav(epoch, SVclockBias, SVrelativeFrequencyBias, MessageFrameTime,
+                                           posX, velX, accelerationX, health,
+                                           posY, velY, accelerationY, frequency,
+                                           posZ, velZ, accelerationZ, operAge,
+                                           StatusFlags, delayDif, URAI, HealthFlags))
+        elif sat[0] == 'J':
+            SVclockBias = float(navFileLine[lineNum][23:42])
+            SVclockDrift = float(navFileLine[lineNum][42:61])
+            SVclockDriftRate = float(navFileLine[lineNum][61:80])
+
+            IODE = float(navFileLine[lineNum + 1][4:23])
+            Crs = float(navFileLine[lineNum + 1][23:42])
+            DeltaN = float(navFileLine[lineNum + 1][42:61])
+            M0 = float(navFileLine[lineNum + 1][61:80])
+
+            Cuc = float(navFileLine[lineNum + 2][4:23])
+            e = float(navFileLine[lineNum + 2][23:42])
+            Cus = float(navFileLine[lineNum + 2][42:61])
+            sqrtA = float(navFileLine[lineNum + 2][61:80])
+
+            toe = float(navFileLine[lineNum + 3][4:23])
+            Cic = float(navFileLine[lineNum + 3][23:42])
+            OMEGA0 = float(navFileLine[lineNum + 3][42:61])
+            Cis = float(navFileLine[lineNum + 3][61:80])
+
+            i0 = float(navFileLine[lineNum + 4][4:23])
+            Crc = float(navFileLine[lineNum + 4][23:42])
+            omega = float(navFileLine[lineNum + 4][42:61])
+            OMEGA_DOT = float(navFileLine[lineNum + 4][61:80])
+
+            IDOT = float(navFileLine[lineNum + 5][4:23])
+            L2Codes = float(navFileLine[lineNum + 5][23:42])
+            GPS_Week = float(navFileLine[lineNum + 5][42:61])
+            L2PdataFlag = float(navFileLine[lineNum + 5][61:80])
+
+            SVaccuracy = float(navFileLine[lineNum + 6][4:23])
+            SVhealth = float(navFileLine[lineNum + 6][23:42])
+            TGD = float(navFileLine[lineNum + 6][42:61])
+            IODC = float(navFileLine[lineNum + 6][61:80])
+
+            Transmission = float(navFileLine[lineNum + 7][4:23])
+            FitIntervalFlag = float(navFileLine[lineNum + 7][23:42])
+
+            lineNum += 8
+            navData[sat].append(qzssNav(epoch, SVclockBias, SVclockDrift, SVclockDriftRate,
+                                        IODE, Crs, DeltaN, M0, Cuc, e, Cus,
+                                        sqrtA, toe, Cic, OMEGA0, Cis,
+                                        i0, Crc, omega, OMEGA_DOT, IDOT, L2Codes, GPS_Week, L2PdataFlag,
+                                        SVaccuracy, SVhealth, TGD, IODC, Transmission, FitIntervalFlag))
+        elif sat[0] == 'S':
+            SVclockBias = float(navFileLine[lineNum][23:42])
+            SVrelativeFrequencyBias = float(navFileLine[lineNum][42:61])
+            Transmission = float(navFileLine[lineNum][61:80])
+
+            posX = float(navFileLine[lineNum + 1][4:23])
+            velX = float(navFileLine[lineNum + 1][23:42])
+            accelerationX = float(navFileLine[lineNum + 1][42:61])
+            health = float(navFileLine[lineNum + 1][61:80])
+
+            posY = float(navFileLine[lineNum + 2][4:23])
+            velY = float(navFileLine[lineNum + 2][23:42])
+            accelerationY = float(navFileLine[lineNum + 2][42:61])
+            AccuracyCode = float(navFileLine[lineNum + 2][61:80])
+
+            posZ = float(navFileLine[lineNum + 3][4:23])
+            velZ = float(navFileLine[lineNum + 3][23:42])
+            accelerationZ = float(navFileLine[lineNum + 3][42:61])
+            IODN = float(navFileLine[lineNum + 3][61:80])
+
+            lineNum += 4
+            navData[sat].append(sbasNav(epoch, SVclockBias, SVrelativeFrequencyBias, Transmission,
+                                        posX, velX, accelerationX, health,
+                                        posY, velY, accelerationY, AccuracyCode,
+                                        posZ, velZ, accelerationZ, IODN))
+        elif sat[0] == 'I':
+            SVclockBias = float(navFileLine[lineNum][23:42])
+            SVclockDrift = float(navFileLine[lineNum][42:61])
+            SVclockDriftRate = float(navFileLine[lineNum][61:80])
+
+            IODEC = float(navFileLine[lineNum + 1][4:23])
+            Crs = float(navFileLine[lineNum + 1][23:42])
+            DeltaN = float(navFileLine[lineNum + 1][42:61])
+            M0 = float(navFileLine[lineNum + 1][61:80])
+
+            Cuc = float(navFileLine[lineNum + 2][4:23])
+            e = float(navFileLine[lineNum + 2][23:42])
+            Cus = float(navFileLine[lineNum + 2][42:61])
+            sqrtA = float(navFileLine[lineNum + 2][61:80])
+
+            toe = float(navFileLine[lineNum + 3][4:23])
+            Cic = float(navFileLine[lineNum + 3][23:42])
+            OMEGA0 = float(navFileLine[lineNum + 3][42:61])
+            Cis = float(navFileLine[lineNum + 3][61:80])
+
+            i0 = float(navFileLine[lineNum + 4][4:23])
+            Crc = float(navFileLine[lineNum + 4][23:42])
+            omega = float(navFileLine[lineNum + 4][42:61])
+            OMEGA_DOT = float(navFileLine[lineNum + 4][61:80])
+
+            IDOT = float(navFileLine[lineNum + 5][4:23])
+            if navFileLine[lineNum + 5][23:42] == '                   ':
+                Blank = 0.0
+            else:
+                Blank = float(navFileLine[lineNum + 5][23:42])
+            IRN_Week = float(navFileLine[lineNum + 5][42:61])
+            Spare1 = 0.0
+
+            RangeAccuracy = float(navFileLine[lineNum + 6][4:23])
+            Health = float(navFileLine[lineNum + 6][23:42])
+            TGD = float(navFileLine[lineNum + 6][42:61])
+            Spare2 = 0.0
+
+            Transmission = float(navFileLine[lineNum + 7][4:23])
+
+            lineNum += 8
+            navData[sat].append(irnssNav(epoch, SVclockBias, SVclockDrift, SVclockDriftRate,
+                                         IODEC, Crs, DeltaN, M0,
+                                         Cuc, e, Cus, sqrtA,
+                                         toe, Cic, OMEGA0, Cis,
+                                         i0, Crc, omega, OMEGA_DOT,
+                                         IDOT, Blank, IRN_Week, Spare1,
+                                         RangeAccuracy, Health, TGD, Spare2,
+                                         Transmission))
+    return navData
