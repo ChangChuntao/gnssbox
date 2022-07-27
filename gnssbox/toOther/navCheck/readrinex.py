@@ -21,11 +21,17 @@ def readrinexLineTime(line):
     second = int(float(line[6]))
     lineDatetime = datetime.datetime(year, month, day, hour, minute, second)
     return lineDatetime
-    
+
 
 # 2022.07.14 : 读取观测文件中卫星对应的时间
 #              by ChangChuntao -> Version : 1.00
 def getRinexSatTime(rinexFile):
+    # rinexFile         : 广播星历文件
+    # rinexSatTime      : 存储形式
+    # {prn1 : [datetime1, datetim2, ..., datetimen],
+    #  prn2 : [datetime1, datetim2, ..., datetimen],
+    #  ...,
+    #  prnn : [datetime1, datetim2, ..., datetimen]}
     rinexFileLineOpen = open(rinexFile, 'r+')
     rinexFileLine = rinexFileLineOpen.readlines()
     rinexFileLineOpen.close()

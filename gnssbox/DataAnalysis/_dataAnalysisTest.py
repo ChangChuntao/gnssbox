@@ -8,7 +8,9 @@ navFile = r'D:\Code\gnssbox\gnssbox\dataAnalysis\test\GAMG00KOR_R_20220010000_01
 # navSatCheck(navFile, rinexFile, outFile)
 
 
-navBrdmFile = r'D:\Code\gnssbox\gnssbox\dataAnalysis\test\BRDM00DLR_S_20220010000_01D_MN.rnx'
-from gnssbox.dataAnalysis.navDif import navDif
-
-navDif(navFile, navBrdmFile)
+# navBrdmFile = r'D:\Code\gnssbox\gnssbox\dataAnalysis\test\BRDM00DLR_S_20220010000_01D_MN.rnx'
+# from gnssbox.dataAnalysis.navDif import navDif
+#
+# navDif(navFile, navBrdmFile)
+OrderOfMagnitude = 1e-13
+print(OrderOfMagnitude)

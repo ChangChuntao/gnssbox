@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# coding=utf-8
 # gnssbox        : The most complete GNSS Python toolkit ever
 # Github         : https://github.com/ChangChuntao/gnssbox.git
 # gnssTime       : GNSS time conversion

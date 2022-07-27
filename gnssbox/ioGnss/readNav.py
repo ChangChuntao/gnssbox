@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# coding=utf-8
 # gnssbox        : The most complete GNSS Python toolkit ever
 # Github         : https://github.com/ChangChuntao/gnssbox.git
 # readNav        : Read the broadcast ephemeris file
@@ -10,6 +11,7 @@
 # 2022.06.03 : 精密星历文件中记录时间的行转为datetime格式
 #              by ChangChuntao -> Version : 1.00
 def navFileTimeLine2Datetime(line):
+    # line      : 广播星历文件内时间行
     import datetime
     line = line[3:]
     year = int(line.split()[0])
@@ -25,6 +27,12 @@ def navFileTimeLine2Datetime(line):
 # 2022.07.14 : 广播星历数据
 #              by ChangChuntao -> Version : 1.00
 def readNavHead(navFile):
+    # navFile       : 广播星历文件
+    # navHeadData   ：{}
+    # {'RINEX VERSION'  : float,
+    #   'First Line'    : str,
+    #   'PGM Line'      : str,
+    #   'LEAP SECONDS'  : int}
     navFileLineOpen = open(navFile, 'r+')
     navFileLine = navFileLineOpen.readlines()
     navFileLineOpen.close()
@@ -45,10 +53,15 @@ def readNavHead(navFile):
 # 2022.07.14 : 广播星历基本信息
 #              by ChangChuntao -> Version : 1.00
 def getNavSatTime(navFile):
+    # navFile           : 广播星历文件
+    # NavSatTime        : 存储形式
+    # {prn1 : [datetime1, datetim2, ..., datetimen],
+    #  prn2 : [datetime1, datetim2, ..., datetimen],
+    #  ...,
+    #  prnn : [datetime1, datetim2, ..., datetimen]}
     navFileLineOpen = open(navFile, 'r+')
     navFileLine = navFileLineOpen.readlines()
     navFileLineOpen.close()
-
     endHeadLine = 0
     satSystem = ['C', 'R', 'G', 'E', 'I', 'S', 'J']
     for line in navFileLine:
@@ -56,7 +69,7 @@ def getNavSatTime(navFile):
         if 'END OF HEADER' in line:
             break
     lineNum = endHeadLine
-    navHead = {}
+    NavSatTime = {}
     satList = []
     while True:
         if lineNum < len(navFileLine) - 1:
@@ -64,7 +77,7 @@ def getNavSatTime(navFile):
             if navFileLine[lineNum][0] in satSystem:
                 if navFileLine[lineNum][:3] not in satList:
                     satList.append(navFileLine[lineNum][:3])
-                    navHead[navFileLine[lineNum][:3]] = []
+                    NavSatTime[navFileLine[lineNum][:3]] = []
         else:
             break
     lineNum = endHeadLine
@@ -74,34 +87,60 @@ def getNavSatTime(navFile):
             if navFileLine[lineNum][0] in satSystem:
                 nowTime = navFileTimeLine2Datetime(navFileLine[lineNum])
 
-                navHead[navFileLine[lineNum][:3]].append(nowTime)
+                NavSatTime[navFileLine[lineNum][:3]].append(nowTime)
         else:
             break
-    return navHead
+    return NavSatTime
 
 
 # 2022.07.14 : 广播星历数据
 #              by ChangChuntao -> Version : 1.00
 def readNav(navFile):
+    # navFile           : 广播星历文件
+    #
+    # navData           : 存储形式
+    # {prn1 : [satclass1, satclass2, ..., satclassn],
+    #  prn2 : [satclass1, satclass2, ..., satclassn],
+    #  ...,
+    #  prnn : [satclass1, satclass2, ..., satclassn]}
+    #
+    # satclass         : 广播星历类
+    # GPS       -> G -> gpsNav
+    # BDS       -> C -> bdsNav
+    # GLONASS   -> R -> glonassNav
+    # GALILEO   -> E -> galileoNav
+    # QZSS      -> J -> qzssNav
+    # IRNSS     -> I -> irnssNav
+    # SBAS      -> S -> sbasNav
     from gnssbox.module.navClass import bdsNav, gpsNav, galileoNav, glonassNav, irnssNav, sbasNav, qzssNav
+    # 读取广播星历卫星号与历元
     navSatTime = getNavSatTime(navFile)
+    # 储存广播星历文件内容
     navFileLineOpen = open(navFile, 'r+')
     navFileLine = navFileLineOpen.readlines()
     navFileLineOpen.close()
+    # 获取版本号
     rinexVer = float(navFileLine[0].split()[0])
+    # 读取文件头结束行行号
     endHeadLine = 0
     for line in navFileLine:
         endHeadLine += 1
         if 'END OF HEADER' in line:
             break
+    # 新建广播星历字典
     navData = {}
     for sat in navSatTime:
         navData[sat] = []
     lineNum = endHeadLine
+    # 读取文件
     while lineNum < len(navFileLine):
+        # 卫星号
         sat = navFileLine[lineNum][:3]
+        # 历元
         epoch = navFileTimeLine2Datetime(navFileLine[lineNum])
         if sat[0] == 'C':
+            # 当为BDS时，读取8行，按照说明读取。
+            # lineNum + 8
             SVclockBias = float(navFileLine[lineNum][23:42])
             SVclockDrift = float(navFileLine[lineNum][42:61])
             SVclockDriftRate = float(navFileLine[lineNum][61:80])
@@ -145,6 +184,7 @@ def readNav(navFile):
                                        i0, Crc, omega, OMEGA_DOT, IDOT, Spare1, BDT_Week, Spare2,
                                        SVaccuracy, SatH1, TGD1, TGD2, Transmission, AODC))
         elif sat[0] == 'G':
+            # lineNum + 8
             SVclockBias = float(navFileLine[lineNum][23:42])
             SVclockDrift = float(navFileLine[lineNum][42:61])
             SVclockDriftRate = float(navFileLine[lineNum][61:80])
@@ -192,6 +232,7 @@ def readNav(navFile):
                                        i0, Crc, omega, OMEGA_DOT, IDOT, L2Codes, GPS_Week, L2PdataFlag,
                                        SVaccuracy, SVhealth, TGD, IODC, Transmission, FitIntervalHours))
         elif sat[0] == 'E':
+            # lineNum + 8
             SVclockBias = float(navFileLine[lineNum][23:42])
             SVclockDrift = float(navFileLine[lineNum][42:61])
             SVclockDriftRate = float(navFileLine[lineNum][61:80])
@@ -235,6 +276,7 @@ def readNav(navFile):
                                            i0, Crc, omega, OMEGA_DOT, IDOT, DataSources, GAL_Week, Spare,
                                            SISA, SVhealth, BGD_E5a_E1, BGD_E5b_E1, Transmission))
         elif sat[0] == 'R':
+            # lineNum + 4 or 5
             SVclockBias = float(navFileLine[lineNum][23:42])
             SVrelativeFrequencyBias = float(navFileLine[lineNum][42:61])
             MessageFrameTime = float(navFileLine[lineNum][61:80])
@@ -272,6 +314,7 @@ def readNav(navFile):
                                            posZ, velZ, accelerationZ, operAge,
                                            StatusFlags, delayDif, URAI, HealthFlags))
         elif sat[0] == 'J':
+            # lineNum + 8
             SVclockBias = float(navFileLine[lineNum][23:42])
             SVclockDrift = float(navFileLine[lineNum][42:61])
             SVclockDriftRate = float(navFileLine[lineNum][61:80])
@@ -316,6 +359,7 @@ def readNav(navFile):
                                         i0, Crc, omega, OMEGA_DOT, IDOT, L2Codes, GPS_Week, L2PdataFlag,
                                         SVaccuracy, SVhealth, TGD, IODC, Transmission, FitIntervalFlag))
         elif sat[0] == 'S':
+            # lineNum + 4
             SVclockBias = float(navFileLine[lineNum][23:42])
             SVrelativeFrequencyBias = float(navFileLine[lineNum][42:61])
             Transmission = float(navFileLine[lineNum][61:80])
@@ -341,6 +385,7 @@ def readNav(navFile):
                                         posY, velY, accelerationY, AccuracyCode,
                                         posZ, velZ, accelerationZ, IODN))
         elif sat[0] == 'I':
+            # lineNum + 8
             SVclockBias = float(navFileLine[lineNum][23:42])
             SVclockDrift = float(navFileLine[lineNum][42:61])
             SVclockDriftRate = float(navFileLine[lineNum][61:80])

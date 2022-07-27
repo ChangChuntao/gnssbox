@@ -25,3 +25,4 @@ for line in mgexInfoFileData[1:]:
     antenna = line.split(',')[13]
     mgexSiteInfo[siteNameShort] = {'LongName': siteNameLong, 'X': siteX, 'Y': siteY, 'Z': siteZ, 'B': siteB, 'L': siteL,
                                    'H': siteH, 'Rec': Receiver, 'System': satSystem, 'Ant': antenna}
+

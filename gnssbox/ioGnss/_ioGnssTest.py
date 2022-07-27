@@ -50,7 +50,12 @@
 # from gnssbox.ioGnss.readrinex import readRinexSat
 # readRinexSat(rinexFile)
 
-from gnssbox.ioGnss.readNav import readNav
+# from gnssbox.ioGnss.readNav import readNav
 
 
-readNav(r'D:\Code\gnssbox\gnssbox\dataAnalysis\test\brdm0010.22p')
+# readNav(r'D:\Code\gnssbox\gnssbox\dataAnalysis\test\brdm0010.22p')
+
+from gnssbox.ioGnss.sp3toBLH import sp3toBLH
+
+sp3File = r'D:\Project\NOW\NSOAS\NSOAS\PODDATA\GF3B\PRJ\ROE\2022\2022205193120\gf3b22141.sp3'
+sp3toBLH(sp3File, r'D:\Code\gnssbox\gnssbox\ioGnss\Example\blh')

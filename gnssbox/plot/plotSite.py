@@ -38,33 +38,38 @@ def plotSite(**kwargs):
                 if igsSiteName in mgexSiteInfo:
                     siteinfo[igsSiteName] = {'L': mgexSiteInfo[igsSiteName]['L'],
                                              'B': mgexSiteInfo[igsSiteName]['B']}
+                else:
+                    print(igsSiteName + 'not in list!')
+        else:
+            print('未正确输入参数！')
+            sys.exit()
     else:
         print('未正确输入参数！')
         sys.exit()
-        
+
     if 'autoLB' in kwargs:
         if kwargs['autoLB'] and 'L' in kwargs:
             print('不可同时传入自动确定绘图范围和手动指定范围')
             sys.exit()
-    
+
     if 'autoLB' in kwargs:
-        if kwargs['autoLB']:
-            lmax = -360.0
-            lmin = 360.0
-            bmax = -180.0
-            bmin = 180.0
-            for site in siteinfo:
-                if siteinfo[site]['L'] > lmax:
-                    lmax =  siteinfo[site]['L']
-                if  siteinfo[site]['L'] < lmin:
-                    lmin =  siteinfo[site]['L']
-                if  siteinfo[site]['B'] > bmax:
-                    bmax =  siteinfo[site]['B']
-                if  siteinfo[site]['B'] < bmin:
-                    bmin =  siteinfo[site]['B']
-            L_range = [lmin - 10.0, lmax + 10.0]
-            B_range = [bmin - 10.0, bmax + 10.0]
-            L_mid = (lmax - lmin) / 2.0
+        lmax = -360.0
+        lmin = 360.0
+        bmax = -180.0
+        bmin = 180.0
+        for site in siteinfo:
+            if siteinfo[site]['L'] > lmax:
+                lmax = siteinfo[site]['L']
+            if siteinfo[site]['L'] < lmin:
+                lmin = siteinfo[site]['L']
+            if siteinfo[site]['B'] > bmax:
+                bmax = siteinfo[site]['B']
+            if siteinfo[site]['B'] < bmin:
+                bmin = siteinfo[site]['B']
+        L_range = [lmin - 10.0, lmax + 10.0]
+        B_range = [bmin - 10.0, bmax + 10.0]
+        L_mid = (lmax - lmin) / 2.0
+
     else:
         if 'L' in kwargs:
             # 获取指定的经度范围，并通过范围获取经度中心线
@@ -93,11 +98,11 @@ def plotSite(**kwargs):
         savePngPath = ''
     if 'showImg' in kwargs:
         showImg = kwargs['showImg']
-        if showImg != True or showImg != False:
+        if showImg is not True or showImg is not False:
             print('showImg参数只接受True或False')
     else:
         showImg = True
-    
+
     # 调用cartoplot绘制站点
     import matplotlib.pyplot as plt
     import matplotlib as mpl
@@ -158,7 +163,7 @@ def plotSite(**kwargs):
         ax.set_extent([L_range[0], L_range[1], B_range[0], B_range[1]], crs=ccrs.PlateCarree())
         ax.set_xticks(L_tricks, crs=ccrs.PlateCarree())
         ax.set_yticks(B_tricks, crs=ccrs.PlateCarree())
-    
+
     if addFeat:
         # 添加陆地
         ax.add_feature(cfeature.LAND)
@@ -174,7 +179,7 @@ def plotSite(**kwargs):
             ax.plot(siteinfo[site]['L'], siteinfo[site]['B'], '^', color='r', mec='k', mew=0, transform=ccrs.Geodetic(),
                     ms=7.0)
             # 添加站名标注，站名向西3°，向北2°,字体大小10
-            plt.text(siteinfo[site]['L'] - 3, siteinfo[site]['B'] + 3, site, transform=ccrs.Geodetic(),
+            plt.text(siteinfo[site]['L'] - 0.3, siteinfo[site]['B'] + 0.3, site, transform=ccrs.Geodetic(),
                      fontsize=10)
             # xy轴标注大小为x-large
     plt.xticks(fontsize='x-large')

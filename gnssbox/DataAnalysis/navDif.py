@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# coding=utf-8
 # gnssbox           : The most complete GNSS Python toolkit ever
 # Github            : https://github.com/ChangChuntao/gnssbox.git
 # navDif            : Broadcast ephemeris comparison
@@ -10,24 +11,40 @@
 # 2022.07.14 : 广播星历对比，并以广播星历格式输出文件
 #              by ChangChuntao -> Version : 1.00
 def navDif(oriNavFile, comparaNavFile, difNavFile=None):
+    # oriNavFile        : 源广播星历文件
+    # comparaNavFile    : 对比广播星历文件
+    # difNavFile        : 输出广播星历文件(可选)
     from gnssbox.ioGnss.readNav import readNav, readNavHead
     from gnssbox.module.navClass import bdsNav, gpsNav, galileoNav, glonassNav, irnssNav, sbasNav, qzssNav
     from gnssbox.ioGnss.writeNav import writeNav
+    # 输出文件的文件名
     if difNavFile is None:
         difNavFile = oriNavFile + '_' + str(comparaNavFile).split('\\')[-1][:4] + '_dif'
+    # 读取源广播星历
     oriNavData = readNav(oriNavFile)
+    # 读取对比广播星历
     comparaNavData = readNav(comparaNavFile)
-
+    # 读取源广播星历文件头
     oriNavHead = readNavHead(oriNavFile)
+    # 新建对比结果字典difNavData
     difNavData = {}
+    # 广播星历数据格式见readNav
+    # 卫星号循环
     for satPrnInOri in oriNavData:
+        # 判断在对比广播星历内是否有此卫星号
         if satPrnInOri in comparaNavData:
+            # 源广播星历历元循环，寻找与对比广播星历的相同历元
             for oriEpochData in oriNavData[satPrnInOri]:
+                # 对比广播星历历元循环
                 for comEpochData in comparaNavData[satPrnInOri]:
+                    # 找到对比广播星历此历元的数据
                     if oriEpochData.Epoch == comEpochData.Epoch:
+                        # 判断difNavData字典内有无此卫星值 若无则新建
                         if satPrnInOri not in difNavData:
                             difNavData[satPrnInOri] = []
+                        # 若卫星为北斗时
                         if satPrnInOri[0] == 'C':
+                            # 对应值做差
                             SVclockBias = oriEpochData.SVclockBias - comEpochData.SVclockBias
                             SVclockDrift = oriEpochData.SVclockDrift - comEpochData.SVclockDrift
                             SVclockDriftRate = oriEpochData.SVclockDriftRate - comEpochData.SVclockDriftRate
@@ -57,12 +74,14 @@ def navDif(oriNavFile, comparaNavFile, difNavFile=None):
                             TGD2 = oriEpochData.TGD2 - comEpochData.TGD2
                             Transmission = oriEpochData.Transmission - comEpochData.Transmission
                             AODC = oriEpochData.AODC - comEpochData.AODC
+                            # 以bdsNav类形式储存
                             difNavData[satPrnInOri].append(
                                 bdsNav(oriEpochData.Epoch, SVclockBias, SVclockDrift, SVclockDriftRate,
                                        AODE, Crs, DeltaN, M0, Cuc, e, Cus,
                                        sqrtA, toe, Cic, OMEGA0, Cis,
                                        i0, Crc, omega, OMEGA_DOT, IDOT, Spare1, BDT_Week, Spare2,
                                        SVaccuracy, SatH1, TGD1, TGD2, Transmission, AODC))
+                        # 同上
                         elif satPrnInOri[0] == 'G':
                             SVclockBias = oriEpochData.SVclockBias - comEpochData.SVclockBias
                             SVclockDrift = oriEpochData.SVclockDrift - comEpochData.SVclockDrift
@@ -262,5 +281,5 @@ def navDif(oriNavFile, comparaNavFile, difNavFile=None):
                                         i0, Crc, omega, OMEGA_DOT, IDOT, L2Codes, GPS_Week, L2PdataFlag,
                                         SVaccuracy, SVhealth, TGD, IODC, Transmission, FitIntervalFlag))
                         break
-
+    # 写入文件
     writeNav(oriNavHead, difNavData, difNavFile, True)
