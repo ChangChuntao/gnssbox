@@ -147,3 +147,12 @@ def readSp3(sp3File):
                 vx = vy = vz = 0.0
             sp3Data[prn].append(sp3Sat(nowEpoch, x, y, z, clk, vx, vy, vz))
     return sp3Data
+
+
+def isSatInSp3(sp3File, gnssSystem):
+    sp3Head = readSp3Head(sp3File)
+    getSystem = False
+    for prn in sp3Head['prn']:
+        if gnssSystem in prn:
+            getSystem = True
+    return getSystem
