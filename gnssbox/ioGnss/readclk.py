@@ -1,4 +1,3 @@
-
 def clkFileTimeLine2Datetime(line):
     import datetime
     year = int(line.split()[0])
@@ -16,8 +15,7 @@ def readClkHead(clkFile):
     clkFileOpen = open(clkFile, 'r+')
     clkFileLines = clkFileOpen.readlines()
     clkFileOpen.close()
-    clkHead = {}
-    clkHead['ANALYSIS CENTER'] = 'WHU  GNSS RESEARCH CENTER, WUHAN UNIVERSITY, P.R.CHINA'
+    clkHead = {'ANALYSIS CENTER': 'WHU  GNSS RESEARCH CENTER, WUHAN UNIVERSITY, P.R.CHINA'}
     clkDataPrn = []
     clkDatetime = []
     typeOfData = []
@@ -31,7 +29,7 @@ def readClkHead(clkFile):
             clkHead['RUN BY'] = 'WHU'
             clkHead['DATE'] = ''
         elif line[60:-1] == '# OF SOLN SATS':
-            clkHead['SOLN SATS'] = int(line.split()[0])
+            clkHead['SATS NUM'] = int(line.split()[0])
         elif line[60:-1] == 'PRN LIST':
             prnLine = line[:60].split()
             for prn in prnLine:
@@ -49,4 +47,12 @@ def readClkHead(clkFile):
     clkHead['SOLN SATS'] = clkDataPrn
     clkHead['epochList'] = clkDatetime
     return clkHead
-            
+
+
+def isSatInClk(clkFile, gnssSystem):
+    clkHead = readClkHead(clkFile)
+    getSystem = False
+    for prn in clkHead['SOLN SATS']:
+        if gnssSystem in prn:
+            getSystem = True
+    return getSystem
